@@ -7,6 +7,10 @@ Create a simple cli-tool of a PHP class.
 - PHP 7.0 or above
 
 
+## Install
+`composer require xy2z/slim-console`
+
+
 ## Usage
 ```php
 use xy2z\SlimConsole;
@@ -30,8 +34,7 @@ class Router {
 	}
 }
 
-new SlimConsole(new Router());
-
+new SlimConsole($argv, new Router());
 ```
 
 

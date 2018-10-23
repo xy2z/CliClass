@@ -6,12 +6,13 @@
 
 class SlimConsole {
 
-	public static $argv;
+	protected static $argv;
 	protected $app;
 	protected $method;
 	protected $method_params;
 
-	public function __construct(object $app) {
+	public function __construct($argv, object $app) {
+		self::$argv = $argv;
 		$this->app = $app;
 
 		if (!isset(self::$argv[1])) {
@@ -117,5 +118,3 @@ class SlimConsole {
 	}
 
 }
-
-SlimConsole::$argv = $argv;
