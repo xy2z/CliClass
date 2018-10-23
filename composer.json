@@ -1,0 +1,17 @@
+{
+    "name": "xy2z/slim-console",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "xy2z",
+            "email": "xy2z@pm.me"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "xy2z\\SlimConsole\\": "src/"
+        }
+    }
+}
