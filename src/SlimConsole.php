@@ -1,9 +1,10 @@
 <?php
 
+namespace xy2z\SlimConsole;
+
 /**
  * SlimConsole
  */
-
 class SlimConsole {
 
 	protected static $argv;
