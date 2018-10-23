@@ -9,7 +9,10 @@ Create a simple cli-tool of a PHP class.
 
 ## Usage
 ```php
+use xy2z\SlimConsole;
+
 require '/path/to/vendor/autoload.php';
+
 
 class Router {
 	/**
