@@ -2,6 +2,10 @@
 
 namespace xy2z\SlimConsole;
 
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionException;
+
 /**
  * SlimConsole
  */
