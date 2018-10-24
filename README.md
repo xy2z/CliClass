@@ -13,10 +13,9 @@ Create a simple cli-tool of a PHP class.
 
 ## Usage
 ```php
-use xy2z\SlimConsole;
-
 require '/path/to/vendor/autoload.php';
 
+use xy2z\SlimConsole\SlimConsole;
 
 class Router {
 	/**
