@@ -4,6 +4,7 @@ namespace xy2z\SlimConsole;
 
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionParameter;
 use ReflectionException;
 
 /**
@@ -28,23 +29,16 @@ class SlimConsole {
 		$this->method = $this->get_method_info(self::$argv[1]);
 		$this->method_params = $this->get_method_parameters($this->method);
 
-		$parameters = array_slice(self::$argv, 2);
-
 		// Check if method is public.
 		if (!$this->method->isPublic()) {
 			exit('Command is not available (not public)');
-		}
-
-		// Check user arguments.
-		if ((count($this->method_params) > 0) && !isset(self::$argv[2])) {
-			echo 'Usage: ' . $this->method->name . $this->show_method_usage($this->method_params);
-			exit;
 		}
 
 		// Validate arguments.
 		$this->validate_args();
 
 		// Run.
+		$parameters = array_slice(self::$argv, 2);
 		call_user_func_array([$this->app, $this->method->name], $parameters);
 	}
 
@@ -81,12 +75,17 @@ class SlimConsole {
 	}
 
 	protected function show_method_usage($method_params) {
-		$retval = '';
+		$retval = [];
+
 		foreach ($method_params as $param) {
-			$retval .= " [" . $param->getType() . ":" . $param->name . "]";
+			 if ($param->isDefaultValueAvailable()) {
+				$retval[] = "[<" . $param->getType() . " $" . $param->name . " = {$param->getDefaultValue()}>]";
+			} else {
+				$retval[] = "<" . $param->getType() . " $" . $param->name . ">";
+			}
 		}
 
-		return $retval;
+		return ' ' . implode(' ', $retval);
 	}
 
 	protected function show_method_description(ReflectionMethod $method) {
@@ -104,11 +103,13 @@ class SlimConsole {
 
 		foreach ($this->method_params as $param) {
 			if (!$param->isDefaultValueAvailable() && !isset(self::$argv[$i])) {
-				exit('Error: Missing argument ' . $i . ' for "' . $param->name . '" (no default value)');
+				echo 'Usage: ' . $this->method->name . $this->show_method_usage($this->method_params) . PHP_EOL;
+				echo 'Error: Missing argument ' . $i . ' for $' . $param->name . ' (no default value)' . PHP_EOL;
+				exit;
 			}
 
 			// Validate user argument is correct typehint
-			if ($param->hasType()) {
+			if (isset(self::$argv[$i]) && $param->hasType()) {
 				if (($param->getType() == 'int') && (!ctype_digit(self::$argv[$i]))) {
 					echo 'Error: Argument ' . $i . ' must be an integer.' . PHP_EOL;
 					exit;
@@ -118,6 +119,7 @@ class SlimConsole {
 					exit;
 				}
 			}
+
 			$i++;
 		}
 	}
