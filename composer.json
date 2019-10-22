@@ -8,7 +8,9 @@
             "email": "xy2z@pm.me"
         }
     ],
-    "require": {},
+    "require": {
+        "wujunze/php-cli-color": "^2.4"
+    },
     "autoload": {
         "psr-4": {
             "xy2z\\SlimConsole\\": "src/"
