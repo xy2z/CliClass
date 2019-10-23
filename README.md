@@ -46,12 +46,12 @@ SlimConsole::init($argv, [
 ### Result
 ```bash
 $ php cli.php
-Available commands:
- - hello_world
-     Says hello world.
+Usage:
+ command [arguments]
 
- - hello [string:name]
-     Says hello to $name.
+Available commands:
+ hello_world  Says hello world.
+ hello        <string $name> Says hello to $name.
 ```
 
 ```bash
@@ -61,7 +61,8 @@ Hello world.
 
 ```bash
 $ php cli.php hello
-Usage: hello [string:name]
+Usage: hello <string $name>
+Error: Missing argument 2 for $name (no default value)
 ```
 
 ```bash
