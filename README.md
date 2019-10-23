@@ -36,7 +36,10 @@ class Router {
 	}
 }
 
-new SlimConsole($argv, new Router());
+SlimConsole::init($argv, [
+	Router::class,
+]);
+
 ```
 
 
