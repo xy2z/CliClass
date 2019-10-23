@@ -13,73 +13,140 @@ define('slimconsole_default_pad_length', 10);
 /**
  * SlimConsole
  */
-class SlimConsole {
+abstract class SlimConsole {
 
 	protected static $argv;
-	protected $app;
-	protected $method;
-	protected $method_params;
-	public static $colors;
+	protected static $classes;
+	protected static $commands;
+	protected static $colors;
+	protected static $alias_separator = ':';
 
-	public function __construct($argv, object $app) {
+	protected static $method;
+	protected static $command;
+	protected static $method_params;
+	protected static $command_class;
+	protected static $class_index;
+
+	public static function init(array $argv, array $classes) {
 		self::$argv = $argv;
-		$this->app = $app;
+		self::$classes = $classes;
 		self::$colors = new Colors();
-		$method_name = self::$argv[1] ?? null;
 
-		if (!isset($method_name)) {
-			$this->list_methods();
+		self::$command = self::$argv[1] ?? null;
+
+		if (!isset(self::$command)) {
+			echo 'Usage:' . PHP_EOL;
+			self::print_method(' command [arguments]');
+			echo PHP_EOL . PHP_EOL;
+
+			self::list_methods();
 			exit;
 		}
 
-		$this->method = $this->get_method_info($method_name);
-		$this->method_params = $this->get_method_parameters($this->method);
+		// Run command.
+		self::run_command(self::$command);
+	}
+
+	/**
+	 * Find which class a command (method) belongs to.
+	 */
+	protected static function find_command($command) {
+		foreach (self::$classes as $index => $class) {
+			foreach (get_class_methods($class) as $method_name) {
+				if ($method_name == $command) {
+					return $index;
+				}
+
+				if (is_string($index)) {
+					// Class alias
+					$alias_command = $index . self::$alias_separator . $method_name;
+					if ($alias_command == $command) {
+						return $index;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Run the command the user has entered.
+	 */
+	protected static function run_command() {
+		// Find which class the method belongs to.
+		self::$class_index = self::find_command(self::$command);
+		if (self::$class_index === false) {
+			self::print_error('Error: Unknown command (' . self::$command . ')');
+			echo PHP_EOL;
+			self::list_methods();
+			exit;
+		}
+
+		// If class is using alias, extract the method name from the command.
+		$method_name = self::$command;
+		if (is_string(self::$class_index)) {
+			$method_name = substr($method_name, mb_strlen(self::$class_index) + mb_strlen(self::$alias_separator));
+		}
+
+		self::$command_class = self::$classes[self::$class_index];
+
+		self::$method = self::get_method_info(self::$command_class, $method_name);
+		self::$method_params = self::get_method_parameters(self::$method);
 
 		// Check if method is public.
-		if (!$this->method->isPublic()) {
-			exit('Command is not available (not public)');
+		if (!self::$method->isPublic()) {
+			self::print_error('Error: Command is not available (not public)');
 		}
 		// Skip magic methods
 		if (mb_substr($method_name, 0, 2) === '__') {
-			exit('Cannot call magic methods.');
+			self::print_error('Error: Cannot call magic methods.');
 		}
 
 		// Validate arguments.
-		$this->validate_args();
+		self::validate_args();
 
-		// Run.
+		// Execute
 		$parameters = array_slice(self::$argv, 2);
-		call_user_func_array([$this->app, $this->method->name], $parameters);
+		if (!self::$method->isStatic()) {
+			// Method is not static, so we must create an object.
+			self::$command_class = new self::$command_class;
+		}
+		call_user_func_array([self::$command_class, self::$method->name], $parameters);
 	}
 
-	public function print_error($msg) {
+	public static function print_error($msg) {
 		echo self::$colors->getColoredString($msg, 'light_red') . PHP_EOL;
 	}
 
-	public function print_method($method_name) {
+	public static function print_method($method_name, $class_alias = null) {
+		if (is_string($class_alias)) {
+			$method_name = $class_alias . self::$alias_separator . $method_name;
+		}
 		echo self::$colors->getColoredString($method_name, 'light_green');
 	}
 
-	protected function list_methods() {
-		echo 'Usage:' . PHP_EOL;
-		$this->print_method(' command [arguments]');
-		echo PHP_EOL . PHP_EOL;
-
+	protected static function list_methods() {
 		echo 'Available commands:' . PHP_EOL;
 
+		foreach (self::$classes as $alias => $class) {
+			self::list_class_methods($class, $alias);
+		}
+	}
+
+	protected static function list_class_methods($class, $class_alias) {
 		$method_pad_length = slimconsole_default_pad_length;
 		$usage_pad_length = slimconsole_default_pad_length;
 		$methods = [];
 
-		foreach (get_class_methods($this->app) as $method_name) {
+		foreach (get_class_methods($class) as $method_name) {
 			// Skip magic methods
 			if (mb_substr($method_name, 0, 2) === '__') {
 				continue;
 			}
 
-			$method = $this->get_method_info($method_name);
-			$params = $this->get_method_parameters($method);
-			$usage = $this->show_method_usage($params);
+			$method = self::get_method_info($class, $method_name);
+			$params = self::get_method_parameters($method);
+			$usage = self::show_method_usage($params);
 			$methods[$method_name] = [
 				'method' => $method,
 				'params' => $params,
@@ -97,32 +164,30 @@ class SlimConsole {
 
 		foreach ($methods as $method_name => $m) {
 			echo ' ';
-			$this->print_method(str_pad($method_name, $method_pad_length));
+			self::print_method(str_pad($method_name, $method_pad_length), $class_alias);
 			echo $m['usage'];
 
-			$this->show_method_description($m['method']);
+			self::show_method_description($m['method']);
 			echo PHP_EOL;
 		}
-		exit;
 	}
 
-	protected function get_method_info($name) {
-		$rc = new ReflectionClass($this->app);
+	protected static function get_method_info($class, $name) {
+		$rc = new ReflectionClass($class);
 		try {
 			return $rc->getMethod($name);
 		}
 		catch (ReflectionException $e) {
-			echo 'Unknown method: ' . $name . PHP_EOL . PHP_EOL;
-			$this->list_methods();
+			self::print_error('Error: Could not get method: ' . $name . '. ' . $e->getMessage());
 			exit;
 		}
 	}
 
-	protected function get_method_parameters($method) {
+	protected static function get_method_parameters($method) {
 		return $method->getParameters();
 	}
 
-	protected function show_method_usage($method_params) {
+	protected static function show_method_usage($method_params) {
 		$retval = [];
 
 		if (empty($method_params)) {
@@ -164,7 +229,7 @@ class SlimConsole {
 		return '<' . $output . '>';
 	}
 
-	protected function show_method_description(ReflectionMethod $method) {
+	protected static function show_method_description(ReflectionMethod $method) {
 		$doc = $method->getDocComment();
 		if (empty($doc)) {
 			return;
@@ -174,16 +239,16 @@ class SlimConsole {
 		echo self::$colors->getColoredString(substr(trim($lines[1]), 2), 'green');
 	}
 
-	protected function validate_args() {
+	protected static function validate_args() {
 		$i = 2;
 
-		foreach ($this->method_params as $param) {
+		foreach (self::$method_params as $param) {
 			if (!$param->isDefaultValueAvailable() && !isset(self::$argv[$i])) {
 				echo 'Usage: ';
-				$this->print_method($this->method->name);
-				echo ' ' . $this->show_method_usage($this->method_params) . PHP_EOL;
+				self::print_method(self::$method->name, self::$class_index);
+				echo ' ' . self::show_method_usage(self::$method_params) . PHP_EOL;
 
-				$this->print_error('Error: Missing argument ' . $i . ' for $' . $param->name . ' (no default value)');
+				self::print_error('Error: Missing argument ' . $i . ' for $' . $param->name . ' (no default value)');
 				exit;
 			}
 
