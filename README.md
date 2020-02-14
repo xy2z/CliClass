@@ -3,7 +3,7 @@
 Create a simple CLI tool from a PHP class.
 - All public methods will be available to run from cli.
 - PHPdocs will be displayed as the description.
-- Method arguments are automatically loaded.
+- Method arguments are automatically validated.
 
 
 ## Requires
