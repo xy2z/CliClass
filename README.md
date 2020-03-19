@@ -1,9 +1,13 @@
-# SlimConsole
+# CliClass
+
+(previously known as SlimConsole)
 
 Create a simple CLI tool from a PHP class.
+
 - All public methods will be available to run from cli.
 - PHPdocs will be displayed as the description.
 - Method arguments are automatically validated.
+- Supports multiple classes.
 
 
 ## Requires
@@ -11,14 +15,14 @@ Create a simple CLI tool from a PHP class.
 
 
 ## Install
-`composer require xy2z/slim-console`
+`composer require xy2z/cliclass`
 
 
 ## Usage
 ```php
 require '/path/to/vendor/autoload.php';
 
-use xy2z\SlimConsole\SlimConsole;
+use xy2z\CliClass\CliClass;
 
 class Router {
 	/**
@@ -36,7 +40,7 @@ class Router {
 	}
 }
 
-SlimConsole::init($argv, [
+CliClass::init($argv, [
 	Router::class,
 ]);
 

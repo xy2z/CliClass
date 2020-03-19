@@ -1,6 +1,6 @@
 <?php
 
-namespace xy2z\SlimConsole;
+namespace xy2z\CliClass;
 
 use ReflectionClass;
 use ReflectionMethod;
@@ -8,12 +8,12 @@ use ReflectionParameter;
 use ReflectionException;
 use Wujunze\Colors;
 
-define('slimconsole_default_pad_length', 10);
+define('cliclass_default_pad_length', 10);
 
 /**
- * SlimConsole
+ * CliClass
  */
-abstract class SlimConsole {
+abstract class CliClass {
 
 	protected static $argv;
 	protected static $classes;
@@ -134,8 +134,8 @@ abstract class SlimConsole {
 	}
 
 	protected static function list_class_methods($class, $class_alias) {
-		$method_pad_length = slimconsole_default_pad_length;
-		$usage_pad_length = slimconsole_default_pad_length;
+		$method_pad_length = cliclass_default_pad_length;
+		$usage_pad_length = cliclass_default_pad_length;
 		$methods = [];
 
 		foreach (get_class_methods($class) as $method_name) {

@@ -1,6 +1,7 @@
 {
-    "name": "xy2z/slim-console",
+    "name": "xy2z/cliclass",
     "type": "library",
+    "description": "Create a simple CLI tool from a PHP class",
     "license": "MIT",
     "authors": [
         {
@@ -13,7 +14,7 @@
     },
     "autoload": {
         "psr-4": {
-            "xy2z\\SlimConsole\\": "src/"
+            "xy2z\\CliClass\\": "src/"
         }
     }
 }
